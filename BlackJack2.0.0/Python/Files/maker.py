@@ -58,7 +58,7 @@ class maker:
         img_label.place(x=pos[0], y=pos[1])
         return img_label
 
-    def make_btn_img(self, file_name:str, pos:List[int], cmd:function) -> Button:
+    def make_btn_img(self, file_name:str, pos:List[int], cmd:Callable) -> Button:
         """
         ### Image Button을 생성하는 함수
         file_name : 사진 파일 경로
@@ -73,7 +73,7 @@ class maker:
         img_btn.place(x=pos[0], y=pos[1])
         return img_btn
 
-    def make_txt_btn_img(self, file_name:str, pos:List[int], cmd:function, txt:List) -> Button:
+    def make_txt_btn_img(self, file_name:str, pos:List[int], cmd:Callable, txt:List) -> Button:
         """
         ### Image Text Label을 생성하는 함수
         file_name : 사진 파일 경로
