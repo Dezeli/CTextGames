@@ -1,4 +1,5 @@
 import os
+import random
 import pyglet
 from maker import maker
 from tkinter import *
@@ -18,9 +19,19 @@ class Game_Screen:
         self.maker = maker(self.screen)
         self.python_path = os.path.join(os.getcwd())
         self.rank_db = DataBase()
+        self.game_setting()
         self.add_font()
         self.menu_screen()
         self.screen.mainloop()
+
+    def game_setting(self) -> None:
+        """
+        게임 진행을 위한 변수 세팅 함수
+        """
+        self.card_loc = [294, 513, 732, 950]
+        self.new_card = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", 
+                           "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13"]
+        self.card_piles = []
 
     def set_screen_size(self) -> None:
         """
@@ -61,10 +72,73 @@ class Game_Screen:
         menu_bg = self.maker.make_img(self.img_path("Bg/menu.png"), [0, 0])
         version_label = self.maker.make_label([1100, 10], ["Ver 2.0.0", "White", "Black", ("나눔손글씨 느릿느릿체", 20)])
 
-        play_btn = self.maker.make_btn_img(self.img_path("Btn/play.png"), [930, 250], self.no_action)
+        self.stage = 0
+        self.cur_score = 0
+        self.target_score = 0
+
+        play_btn = self.maker.make_btn_img(self.img_path("Btn/play.png"), [930, 250], self.stage_screen)
         rank_btn = self.maker.make_btn_img(self.img_path("Btn/rank.png"), [930, 350], self.rank_screen)
         how_btn = self.maker.make_btn_img(self.img_path("Btn/how.png"), [930, 450], self.how_screen)
         exit_btn = self.maker.make_btn_img(self.img_path("Btn/exit.png"), [930, 550], self.exit)
+
+    def stage_screen(self) -> None:
+        """
+        스테이지 화면 구현 함수
+        """
+        stage_bg = self.maker.make_img(self.img_path("Bg/stage.png"), [0, 0])
+
+        self.stage += 1
+        self.target_score = 2*self.stage**2
+        stage_label = self.maker.make_txt_img(self.img_path("Label/stage.png"), [450, 220], [f"STAGE {self.stage}", "White", ("나눔손글씨 옥비체", 55)])
+        target_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [493, 350], [f"목표점수 : {self.target_score}", "White", ("나눔손글씨 옥비체", 30)])
+        current_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [493, 420], [f"현재점수 : {self.cur_score}", "White", ("나눔손글씨 옥비체", 30)])
+
+        stage_bg.after(3000, self.play_screen)
+
+    def play_screen(self) -> None:
+        """
+        플레이 화면 구현 함수
+        """
+        game_bg = self.maker.make_img(self.img_path("Bg/game.png"), [0, 0])
+        stage_label = self.maker.make_txt_img(self.img_path("Label/stage.png"), [860, 30], [f"STAGE {self.stage}", "White", ("나눔손글씨 옥비체", 55)])
+        target_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [945, 155], [f"목표점수 : {self.target_score}", "White", ("나눔손글씨 옥비체", 30)])
+        current_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [945, 225], [f"현재점수 : {self.cur_score}", "White", ("나눔손글씨 옥비체", 30)])
+        cnt_card_pile = len(self.card_piles)
+        if not cnt_card_pile:
+            cnt_card_pile = 26
+        self.cnt_card_label = self.maker.make_txt_img(self.img_path("Label/card_num.png"), [158, 306], [f"{cnt_card_pile}", "Black", ("나눔손글씨 옥비체", 30)])
+
+        self.cnt_stage_card = 0
+        self.stage_score = 0
+        self.ace = 0
+
+        self.go_btn = self.maker.make_btn_img(self.img_path("Btn/go.png"), [300, 70], self.open_card)
+        stop_btn = self.maker.make_btn_img(self.img_path("Btn/stop.png"), [300, 170], self.play_screen)
+
+    
+    def open_card(self) -> None:
+        """
+        카드 오픈 함수
+        """
+        if not self.card_piles:
+            self.card_piles += self.new_card
+            random.shuffle(self.card_piles)
+        card = self.card_piles.pop()
+        card_num = int(card[1:])
+        self.stage_score += card_num
+        if card_num==1:
+            self.ace += 1
+        card_img = self.maker.make_img(self.img_path(f"img/{card}.png"), [self.card_loc[self.cnt_stage_card], 350])
+        cnt_card_pile = len(self.card_piles)
+        if not cnt_card_pile:
+            cnt_card_pile = 26
+        self.cnt_card_label["text"] = cnt_card_pile
+        self.cnt_stage_card += 1
+
+
+        if self.cnt_stage_card==4:
+            self.go_btn["state"] = "disabled"
+
 
     def rank_screen(self) -> None:
         """
