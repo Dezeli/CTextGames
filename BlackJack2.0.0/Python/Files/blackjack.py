@@ -113,7 +113,7 @@ class Game_Screen:
         self.ace = 0
 
         self.go_btn = self.maker.make_btn_img(self.img_path("Btn/go.png"), [300, 70], self.open_card)
-        stop_btn = self.maker.make_btn_img(self.img_path("Btn/stop.png"), [300, 170], self.play_screen)
+        stop_btn = self.maker.make_btn_img(self.img_path("Btn/stop.png"), [300, 170], self.get_point)
 
     
     def open_card(self) -> None:
@@ -138,7 +138,46 @@ class Game_Screen:
 
         if self.cnt_stage_card==4:
             self.go_btn["state"] = "disabled"
+    
+    def get_point(self) -> None:
+        """
+        점수 획득 함수
+        """
+        if self.ace==1:
+            if self.stage_score + 10 < 22:
+                self.stage_score += 10
+        elif self.ace==2:
+            if self.stage_score + 20 < 22:
+                self.stage_score += 20
+            if self.stage_score + 10 < 22:
+                self.stage_score += 10
+            
+        if self.stage_score > 21:
+            self.cur_score += 0
+            point_text = "카드 숫자의 합이 21을 초과하므로 0점을 획득합니다."
+        elif self.stage_score == 21:
+            self.cur_score += 21
+            bonus = random.randint(25, 50)
+            self.cur_score += bonus
+            point_text = f"블랙잭! 21점과 보너스 {bonus}점을 획득합니다."
+        else:
+            self.cur_score += self.stage_score
+            point_text = f"{self.stage_score}점을 획득합니다."
 
+        give_point_label = self.maker.make_txt_img(self.img_path("Label/givepoint.png"), [450, 30], [f"{point_text}", "Blue", ("나눔손글씨 힘내라는 말보단", 30)])
+
+
+        if self.target_score > self.cur_score:
+            give_point_label.after(3000, self.game_over)
+        else:
+            give_point_label.after(3000, self.stage_screen)
+
+    def game_over(self) -> None:
+        """
+        게임 오버 화면 함수
+        """
+        game_over_bg = self.maker.make_img(self.img_path("Bg/gameover.png"), [0, 0])
+        
 
     def rank_screen(self) -> None:
         """
