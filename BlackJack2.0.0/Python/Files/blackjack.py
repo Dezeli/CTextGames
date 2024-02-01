@@ -6,7 +6,11 @@ from tkinter import *
 from tkinter import messagebox
 from typing import *
 from db import DataBase
+from pygame import mixer
+from threading import Thread
+from playsound import playsound
 
+mixer.init()
 
 class Game_Screen:
     def __init__(self) -> None:
@@ -14,12 +18,18 @@ class Game_Screen:
         ### Black Jack 게임 실행 Class
         """
         self.screen = Tk()
+        self.python_path = os.path.join(os.getcwd())
         self.screen.title("Black Jack 2.0.0")
+        self.screen.iconbitmap(self.img_path("Icon/Joker.ico"))
         self.set_screen_size()
         self.maker = maker(self.screen)
-        self.python_path = os.path.join(os.getcwd())
         self.rank_db = DataBase()
         self.add_font()
+
+        music_thread = Thread(target=self.main_music)
+        music_thread.daemon = True
+        music_thread.start()
+
         self.menu_screen()
         self.screen.mainloop()
 
@@ -45,10 +55,25 @@ class Game_Screen:
         self.screen.geometry(f"{screen_width}x{screen_height}-{center_width}-{center_height}")
         self.screen.resizable(width=False, height=False)
 
+    def main_music(self) -> None:
+        """
+        ### 배경음악 함수
+        """
+        self.bg_music = mixer.Sound(os.path.join(self.python_path, f"../../Sounds/Bg.mp3"))
+        self.bg_music.play(loops=10**8)
+        
+    def sound(self, path:str) -> str:
+        """
+        ### 사운드 경로 지정 함수
+        path : 사운드 파일 경로 (Sounds 폴더 하위 경로만)
+        """
+        mixer.music.load(os.path.join(self.python_path, f"../../Sounds/{path}"))
+        mixer.music.play(loops=0)
+
     def img_path(self, path:str) -> str:
         """
         ### 이미지 경로 지정 함수
-        path : 이미지 파일 경로 (Images 파일 하위 경로만)
+        path : 이미지 파일 경로 (Images 폴더 하위 경로만)
         """
         return os.path.join(self.python_path, f"../../images/{path}")
 
@@ -74,7 +99,7 @@ class Game_Screen:
         self.stage = 0
         self.cur_score = 0
         self.target_score = 0
-
+        
         self.game_setting()
 
         play_btn = self.maker.make_btn_img(self.img_path("Btn/play.png"), [930, 250], self.stage_screen)
@@ -90,16 +115,19 @@ class Game_Screen:
 
         self.stage += 1
         self.target_score = 2*self.stage**2
+        self.bg_music.set_volume(0)
+        self.sound("Stage.mp3")
         stage_label = self.maker.make_txt_img(self.img_path("Label/stage.png"), [450, 220], [f"STAGE {self.stage}", "White", ("나눔손글씨 옥비체", 55)])
         target_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [493, 350], [f"목표점수 : {self.target_score}점", "White", ("나눔손글씨 옥비체", 30)])
         current_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [493, 420], [f"현재점수 : {self.cur_score}점", "White", ("나눔손글씨 옥비체", 30)])
 
-        stage_bg.after(3000, self.play_screen)
+        stage_bg.after(4000, self.play_screen)
 
     def play_screen(self) -> None:
         """
         플레이 화면 구현 함수
         """
+        self.bg_music.set_volume(0.2)
         game_bg = self.maker.make_img(self.img_path("Bg/game.png"), [0, 0])
         stage_label = self.maker.make_txt_img(self.img_path("Label/stage.png"), [860, 30], [f"STAGE {self.stage}", "White", ("나눔손글씨 옥비체", 55)])
         target_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [945, 155], [f"목표점수 : {self.target_score}점", "White", ("나눔손글씨 옥비체", 30)])
@@ -121,6 +149,7 @@ class Game_Screen:
         """
         카드 오픈 함수
         """
+        self.sound("Pick.mp3")
         if not self.card_piles:
             self.card_piles += self.new_card
             random.shuffle(self.card_piles)
@@ -152,31 +181,40 @@ class Game_Screen:
                 self.stage_score += 20
             if self.stage_score + 10 < 22:
                 self.stage_score += 10
-            
+        
+        
+        self.bg_music.set_volume(0)
         if self.stage_score > 21:
             self.cur_score += 0
             point_text = "카드 숫자의 합이\n21을 초과하므로\n0점을 획득합니다."
+            self.sound("Wrong.wav")
         elif self.stage_score == 21:
             self.cur_score += 21
             bonus = random.randint(25, 50)
             self.cur_score += bonus
             point_text = f"블랙잭! 21점과\n보너스 {bonus}점을 획득합니다."
+            self.sound("Correct.mp3")
         else:
             self.cur_score += self.stage_score
             point_text = f"{self.stage_score}점을 획득합니다."
+            if self.stage_score != 0:
+                self.sound("Correct.mp3")
+            else:
+                self.sound("Wrong.wav")
 
         give_point_label = self.maker.make_txt_img(self.img_path("Label/givepoint.png"), [450, 30], [f"{point_text}", "Blue", ("나눔손글씨 힘내라는 말보단", 30)])
 
 
         if self.target_score > self.cur_score:
-            give_point_label.after(3000, self.game_over)
+            give_point_label.after(4000, self.game_over)
         else:
-            give_point_label.after(3000, self.stage_screen)
+            give_point_label.after(4000, self.stage_screen)
 
     def game_over(self) -> None:
         """
         게임 오버 화면 함수
         """
+        self.sound("GameOver.mp3")
         game_over_bg = self.maker.make_img(self.img_path("Bg/gameover.png"), [0, 0])
         stage_label = self.maker.make_txt_img(self.img_path("Label/result.png"), [50, 370], [f"스테이지 {self.stage}", "White", ("나눔손글씨 힘내라는 말보단", 23)])
         target_label = self.maker.make_txt_img(self.img_path("Label/result.png"), [50, 450], [f"목표 점수 {self.target_score}", "White", ("나눔손글씨 힘내라는 말보단", 23)])
@@ -194,11 +232,13 @@ class Game_Screen:
         nicname = self.name_entry.get()
         self.rank_db.save(nicname, self.stage, self.cur_score)
         self.menu_screen()
+        self.bg_music.set_volume(1)
 
     def rank_screen(self) -> None:
         """
         ### 랭킹 화면 구현 함수
         """
+        self.sound("menu.mp3")
         rank_bg = self.maker.make_img(self.img_path("Bg/rank.png"), [0, 0])
         back_btn = self.maker.make_btn_img(self.img_path("Btn/back.png"), [1025, 580], self.menu_screen)
         rank_data = self.rank_db.get_topten()
@@ -211,6 +251,7 @@ class Game_Screen:
         """
         ### 게임 방법 설명 화면 구현 함수
         """
+        self.sound("menu.mp3")
         how_bg = self.maker.make_img(self.img_path("Bg/how.png"), [0, 0])
         back_btn = self.maker.make_btn_img(self.img_path("Btn/back.png"), [1025, 580], self.menu_screen)
 
@@ -224,6 +265,7 @@ class Game_Screen:
         """
         ### 게임을 종료시키는 함수
         """
+        self.sound("menu.mp3")
         answer = messagebox.askyesno("확인", "정말 종료하시겠습니까?")
         if answer:
             self.screen.destroy()
