@@ -19,7 +19,6 @@ class Game_Screen:
         self.maker = maker(self.screen)
         self.python_path = os.path.join(os.getcwd())
         self.rank_db = DataBase()
-        self.game_setting()
         self.add_font()
         self.menu_screen()
         self.screen.mainloop()
@@ -76,6 +75,8 @@ class Game_Screen:
         self.cur_score = 0
         self.target_score = 0
 
+        self.game_setting()
+
         play_btn = self.maker.make_btn_img(self.img_path("Btn/play.png"), [930, 250], self.stage_screen)
         rank_btn = self.maker.make_btn_img(self.img_path("Btn/rank.png"), [930, 350], self.rank_screen)
         how_btn = self.maker.make_btn_img(self.img_path("Btn/how.png"), [930, 450], self.how_screen)
@@ -90,8 +91,8 @@ class Game_Screen:
         self.stage += 1
         self.target_score = 2*self.stage**2
         stage_label = self.maker.make_txt_img(self.img_path("Label/stage.png"), [450, 220], [f"STAGE {self.stage}", "White", ("나눔손글씨 옥비체", 55)])
-        target_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [493, 350], [f"목표점수 : {self.target_score}", "White", ("나눔손글씨 옥비체", 30)])
-        current_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [493, 420], [f"현재점수 : {self.cur_score}", "White", ("나눔손글씨 옥비체", 30)])
+        target_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [493, 350], [f"목표점수 : {self.target_score}점", "White", ("나눔손글씨 옥비체", 30)])
+        current_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [493, 420], [f"현재점수 : {self.cur_score}점", "White", ("나눔손글씨 옥비체", 30)])
 
         stage_bg.after(3000, self.play_screen)
 
@@ -101,8 +102,8 @@ class Game_Screen:
         """
         game_bg = self.maker.make_img(self.img_path("Bg/game.png"), [0, 0])
         stage_label = self.maker.make_txt_img(self.img_path("Label/stage.png"), [860, 30], [f"STAGE {self.stage}", "White", ("나눔손글씨 옥비체", 55)])
-        target_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [945, 155], [f"목표점수 : {self.target_score}", "White", ("나눔손글씨 옥비체", 30)])
-        current_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [945, 225], [f"현재점수 : {self.cur_score}", "White", ("나눔손글씨 옥비체", 30)])
+        target_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [945, 155], [f"목표점수 : {self.target_score}점", "White", ("나눔손글씨 옥비체", 30)])
+        current_label = self.maker.make_txt_img(self.img_path("Label/score.png"), [945, 225], [f"현재점수 : {self.cur_score}점", "White", ("나눔손글씨 옥비체", 30)])
         cnt_card_pile = len(self.card_piles)
         if not cnt_card_pile:
             cnt_card_pile = 26
@@ -154,12 +155,12 @@ class Game_Screen:
             
         if self.stage_score > 21:
             self.cur_score += 0
-            point_text = "카드 숫자의 합이 21을 초과하므로 0점을 획득합니다."
+            point_text = "카드 숫자의 합이\n21을 초과하므로\n0점을 획득합니다."
         elif self.stage_score == 21:
             self.cur_score += 21
             bonus = random.randint(25, 50)
             self.cur_score += bonus
-            point_text = f"블랙잭! 21점과 보너스 {bonus}점을 획득합니다."
+            point_text = f"블랙잭! 21점과\n보너스 {bonus}점을 획득합니다."
         else:
             self.cur_score += self.stage_score
             point_text = f"{self.stage_score}점을 획득합니다."
@@ -177,7 +178,22 @@ class Game_Screen:
         게임 오버 화면 함수
         """
         game_over_bg = self.maker.make_img(self.img_path("Bg/gameover.png"), [0, 0])
+        stage_label = self.maker.make_txt_img(self.img_path("Label/result.png"), [50, 370], [f"스테이지 {self.stage}", "White", ("나눔손글씨 힘내라는 말보단", 23)])
+        target_label = self.maker.make_txt_img(self.img_path("Label/result.png"), [50, 450], [f"목표 점수 {self.target_score}", "White", ("나눔손글씨 힘내라는 말보단", 23)])
+        cur_label = self.maker.make_txt_img(self.img_path("Label/result.png"), [200, 450], [f"현재 점수 {self.cur_score}", "White", ("나눔손글씨 힘내라는 말보단", 23)])
+        self.name_entry = Entry(self.screen, fg="Blue", font=("나눔손글씨 힘내라는 말보단", 30), width=8, bd=8, relief="ridge")
+        self.name_entry.insert(0, "JOKER")
+        self.name_entry.place(x=50, y=580)
+        register_btn = self.maker.make_btn_img(self.img_path("Btn/register.png"), [217, 583], self.save_rank)
         
+    def save_rank(self) -> None:
+        """
+        랭킹 등록 함수
+        """
+        self.name_entry.config(state="disabled")
+        nicname = self.name_entry.get()
+        self.rank_db.save(nicname, self.stage, self.cur_score)
+        self.menu_screen()
 
     def rank_screen(self) -> None:
         """
@@ -189,7 +205,7 @@ class Game_Screen:
         rank_label_pos = [[610, 217], [610, 280], [610, 343], [610, 406], [610, 469], [920, 217], [920, 280], [920, 343], [920, 406], [920, 469]]
         for i in range(10):
             rank_label = self.maker.make_txt_img(self.img_path("Label/rank.png"), [rank_label_pos[i][0], rank_label_pos[i][1]], 
-                                                 [f"{rank_data[i][0]} {rank_data[i][1]}", "White", ("나눔손글씨 힘내라는 말보단", 25)])
+                                                 [f"{rank_data[i][0]} {rank_data[i][1]}점", "White", ("나눔손글씨 힘내라는 말보단", 25)])
 
     def how_screen(self) -> None:
         """
