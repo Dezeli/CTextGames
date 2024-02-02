@@ -8,7 +8,6 @@ from typing import *
 from db import DataBase
 from pygame import mixer
 from threading import Thread
-from playsound import playsound
 
 mixer.init()
 
